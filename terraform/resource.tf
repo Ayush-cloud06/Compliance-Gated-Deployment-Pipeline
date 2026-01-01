@@ -14,6 +14,10 @@ data "aws_ami" "amazon_linux" {
   }
 }
 
+data "aws_iam_instance_profile" "ec2_profil" {
+  name = "ec2-basic-profile"
+}
+
 resource "aws_instance" "demo" {
   for_each      = toset(local.server_names)
   ami           = data.aws_ami.amazon_linux.id
