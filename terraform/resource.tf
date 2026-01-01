@@ -13,15 +13,27 @@ data "aws_ami" "amazon_linux" {
     values = ["al2023-ami-*-x86_64"]
   }
 }
+
 resource "aws_instance" "demo" {
   for_each      = toset(local.server_names)
   ami           = data.aws_ami.amazon_linux.id
   instance_type = var.instance_type
 
+  iam_instance_profile = aws_iam_instance_profile.ec2_profile.name
+
+  monitoring    = true
+  ebs_optimized = true
+
+  metadata_options {
+    http_tokens = "required"
+  }
+
+  root_block_device {
+    encrypted = true
+  }
+
   tags = {
     Name        = "${local.Project}-server-${each.key}"
-    Environment = "${local.Environment}"
+    Environment = local.Environment
   }
 }
-
-
