@@ -1,0 +1,51 @@
+name: Compliance-Gated Deployment Pipeline
+
+on:
+    push:
+        branches:
+            - main
+    workflow_dispatch:
+
+jobs:
+    checks:
+        name: Security & Compliance Checks
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Set up Python
+              uses: actions/setup-python@v5
+              with:
+                  python-version: "3.10"
+
+            - name: Install Checkov
+              run: |
+                  python -m pip install --upgrade pip
+                  pip install checkov
+
+            - name: Run Checkov scan on Terraform
+              run: |
+                  mkdir -p reports
+                  checkov \
+                    -d terraform \
+                    --framework terraform \
+                    --severity-threshold HIGH \
+                    --output json \
+                    > reports/checkov.json
+
+            - name: Show Checkov summary
+              run: |
+                  checkov -d terraform --quiet || true
+
+    apply:
+        name: Protected Apply
+        needs: checks
+        runs-on: ubuntu-latest
+        environment: production
+
+        steps:
+            - name: Apply step (dangerous)
+              run: |
+                  echo "This represents APPLY / REMEDIATION"

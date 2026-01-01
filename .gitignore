@@ -1,0 +1,56 @@
+##################################
+# Terraform
+##################################
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+terraform.tfvars
+terraform.tfvars.json
+
+##################################
+# AWS / Credentials
+##################################
+.aws/
+**/.aws/
+.env
+.env.*
+*.pem
+*.key
+*.crt
+
+##################################
+# Python
+##################################
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+.env/
+pip-wheel-metadata/
+
+##################################
+# Reports / Generated Evidence
+##################################
+reports/*
+!reports/.gitkeep
+
+##################################
+# OS / Editor
+##################################
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+##################################
+# Logs
+##################################
+*.log
