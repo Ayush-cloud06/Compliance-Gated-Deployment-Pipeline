@@ -19,7 +19,7 @@ resource "aws_instance" "demo" {
   ami           = data.aws_ami.amazon_linux.id
   instance_type = var.instance_type
 
-  iam_instance_profile = aws_iam_instance_profile.ec2_profile.name
+  iam_instance_profile = data.aws_iam_instance_profile.ec2_profile.name
 
   monitoring    = true
   ebs_optimized = true
