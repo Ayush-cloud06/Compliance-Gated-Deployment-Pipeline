@@ -14,7 +14,7 @@ data "aws_ami" "amazon_linux" {
   }
 }
 
-data "aws_iam_instance_profile" "ec2_profil" {
+data "aws_iam_instance_profile" "ec2_profile" {
   name = "ec2-basic-profile"
 }
 
