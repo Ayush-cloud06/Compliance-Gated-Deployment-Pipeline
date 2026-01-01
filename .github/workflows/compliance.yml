@@ -31,7 +31,6 @@ jobs:
                   checkov \
                     -d terraform \
                     --framework terraform \
-                    --severity-threshold HIGH \
                     --output json \
                     > reports/checkov.json
 
