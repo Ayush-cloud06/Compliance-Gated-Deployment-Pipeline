@@ -134,7 +134,7 @@ jobs:
             - name: Run Prowler (Post-deployement audit)
               run: |
                   mkdir -p reports/prowler
-                  prowler aws \ 
+                  prowler aws \
                   --region ap-south-1 \
                   --output-formats json \
                   --output-path reports/prowler \
