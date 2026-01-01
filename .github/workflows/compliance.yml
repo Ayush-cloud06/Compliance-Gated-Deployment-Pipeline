@@ -137,7 +137,7 @@ jobs:
                   prowler aws \ 
                   --region ap-south-1 \
                   --output-formats json \
-                  --output-directory reports/prowler \
+                  --output-path reports/prowler \
                   || true
 
             - name: Upload prowler report to s3 (OIDC)
