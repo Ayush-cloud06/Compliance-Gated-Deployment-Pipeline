@@ -48,3 +48,9 @@ jobs:
             - name: Apply step (dangerous)
               run: |
                   echo "This represents APPLY / REMEDIATION"
+
+            - name: Upload compliance reports
+              uses: actions/upload-artifact@v4
+              with:
+                  name: compliance-reports
+                  path: reports/
