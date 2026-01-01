@@ -15,6 +15,21 @@ jobs:
             - name: Checkout repository
               uses: actions/checkout@v4
 
+            - name: Set up Terraform
+              uses: hashicorp/setup-terraform@v3
+
+            - name: Terraform Init
+              run: |
+                  cd terraform
+                  terraform init
+
+            - name: Terraform Plan
+              run: |
+                  mkdir -p reports
+                  cd terraform
+                  terraform plan -out=tfplan.binary
+                  terraform show -json tfplan.binary > ../reports/tfplan.json
+
             - name: Set up Python
               uses: actions/setup-python@v5
               with:
@@ -27,7 +42,6 @@ jobs:
 
             - name: Run Checkov scan on Terraform
               run: |
-                  mkdir -p reports
                   checkov -d terraform --framework terraform --output json > reports/checkov.json
 
             - name: Show Checkov summary
@@ -41,7 +55,7 @@ jobs:
                   path: reports/
 
     apply:
-        name: Protected Apply (OIDC Test)
+        name: Protected Apply (Manual Approval Required)
         needs: checks
         runs-on: ubuntu-latest
         environment: production
@@ -62,3 +76,16 @@ jobs:
 
             - name: Verify AWS identity
               run: aws sts get-caller-identity
+
+            - name: Set up Terraform
+              uses: hashicorp/setup-terraform@v3
+
+            - name: Terraform Init
+              run: |
+                  cd terraform
+                  terraform init
+
+            - name: Terraform Apply
+              run: |
+                  cd terraform
+                  terraform apply -auto-approve
