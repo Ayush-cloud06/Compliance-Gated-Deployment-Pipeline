@@ -136,7 +136,7 @@ jobs:
                   mkdir -p reports/prowler
                   prowler aws \
                   --region ap-south-1 \
-                  --output-formats json \
+                  --output-formats json-ocsf \
                   --output-path reports/prowler \
                   || true
 
@@ -159,4 +159,4 @@ jobs:
                        "date": "${DATE}",
                        "trigger": "post-deployment"
                       }
-                       EOF
+                        EOF
