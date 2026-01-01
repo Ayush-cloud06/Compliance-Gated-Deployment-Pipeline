@@ -58,11 +58,37 @@ jobs:
               run: |
                   checkov -d terraform --quiet || true
 
-            - name: Upload compliance reports
+            - name: Upload compliance reports (artifact)
               uses: actions/upload-artifact@v4
               with:
                   name: compliance-reports
                   path: reports/
+
+            - name: Generate compliance metadata
+              run: |
+                  DATE=$(date +%F)
+                  cat <<EOF > reports/metadata.json
+                  {
+                    "tool": "checkov",
+                    "repository": "${GITHUB_REPOSITORY}",
+                    "commit": "${GITHUB_SHA}",
+                    "run_id": "${GITHUB_RUN_ID}",
+                    "actor": "${GITHUB_ACTOR}",
+                    "date": "${DATE}"
+                  }
+                  EOF
+
+            - name: Upload Checkov report to S3 (OIDC)
+              run: |
+                  DATE=$(date +%F)
+                  aws s3 cp reports/checkov.json \
+                    s3://compliance-evidence-ayush-982081090103/checkov/${DATE}/checkov.json
+
+            - name: Upload metadata to S3 (OIDC)
+              run: |
+                  DATE=$(date +%F)
+                  aws s3 cp reports/metadata.json \
+                    s3://compliance-evidence-ayush-982081090103/checkov/${DATE}/metadata.json
 
     apply:
         name: Protected Apply (Manual Approval Required)
