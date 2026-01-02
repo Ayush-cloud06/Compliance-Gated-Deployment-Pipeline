@@ -5,10 +5,7 @@ A security-first CI/CD pipeline that enforces preventive and detective cloud com
 
 This project demonstrates how modern cloud security teams combine Infrastructure as Code scanning, runtime posture assessment, and policy-as-code to produce verifiable, immutable compliance evidence — not just passing builds.
 
-
-────────────────────────────────────────
 🎯 OBJECTIVES
-────────────────────────────────────────
 
 - Prevent insecure infrastructure from being deployed
 - Detect compliance drift after deployment
@@ -17,9 +14,7 @@ This project demonstrates how modern cloud security teams combine Infrastructure
 - Follow least-privilege, credentialless authentication using GitHub Actions OIDC
 
 
-────────────────────────────────────────
 🧠 HIGH-LEVEL ARCHITECTURE
-────────────────────────────────────────
 
 Pipeline Flow (GitHub Actions)
 
@@ -40,10 +35,7 @@ Pipeline Flow (GitHub Actions)
    - All outputs uploaded to an immutable S3 bucket
    - Versioned, date-partitioned, audit-friendly structure
 
-
-────────────────────────────────────────
 🔐 AUTHENTICATION & TRUST MODEL
-────────────────────────────────────────
 
 - No AWS access keys are used
 - GitHub Actions authenticates to AWS using OIDC
@@ -58,10 +50,7 @@ Permission Model (Least Privilege):
 - Write-only permissions for compliance evidence
 - Explicit iam:PassRole where required
 
-
-────────────────────────────────────────
 🧩 TOOLING & RATIONALE
-────────────────────────────────────────
 
 Terraform  → Infrastructure as Code  
 Checkov    → Static security & compliance scanning of Terraform  
@@ -72,24 +61,24 @@ GitHub Actions → CI/CD orchestration
 Amazon S3  → Immutable compliance evidence storage  
 
 
-────────────────────────────────────────
+
 📂 REPOSITORY STRUCTURE
-────────────────────────────────────────
+
 
 '''
 ├── README.md
 ├── policies
-│   ├── ec2.rego        # EC2 compliance policies
-│   ├── iam.rego        # IAM compliance policies
-│   └── s3.rego         # S3 compliance policies
+│   ├── ec2.rego        
+│   ├── iam.rego       
+│   └── s3.rego      
 ├── reports
 │   └── opa
-│       └── input.json  # Normalized OPA input (generated)
+│       └── input.json  
 ├── scripts
-│   ├── boto3_ec2_audit.py   # EC2 discovery
-│   ├── boto3_iam_audit.py   # IAM discovery
-│   ├── boto3_s3_audit.py    # S3 discovery
-│   └── boto_opa_stream.py   # Normalization layer for OPA
+│   ├── boto3_ec2_audit.py  
+│   ├── boto3_iam_audit.py  
+│   ├── boto3_s3_audit.py    
+│   └── boto_opa_stream.py  
 └── terraform
     ├── outputs.tf
     ├── provider.tf
@@ -98,9 +87,7 @@ Amazon S3  → Immutable compliance evidence storage
 '''
 
 
-────────────────────────────────────────
 🧪 POLICY EVALUATION MODEL (OPA)
-────────────────────────────────────────
 
 OPA does not scan AWS directly.
 
@@ -123,10 +110,7 @@ Example OPA decision output:
 
 This separation mirrors real-world GRC architectures used in enterprise environments.
 
-
-────────────────────────────────────────
 📦 EVIDENCE & AUDIT READINESS
-────────────────────────────────────────
 
 All security outputs are stored in S3 using the following structure:
 
@@ -151,10 +135,7 @@ This enables:
 - Internal security reviews
 - Historical drift analysis
 
-
-────────────────────────────────────────
 🚦 ENFORCEMENT PHILOSOPHY
-────────────────────────────────────────
 
 - Checkov  → Advisory (visibility-first)
 - OPA      → Decision authority (policy enforcement)
