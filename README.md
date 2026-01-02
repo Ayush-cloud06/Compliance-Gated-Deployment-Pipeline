@@ -8,13 +8,18 @@ GitHub Actions pipeline that enforces security and compliance policies before Te
 .
 ├── README.md
 ├── policies
+│   ├── ec2.rego
 │   ├── iam.rego
 │   └── s3.rego
 ├── reports
+│   └── opa
+│       └── input.json
 ├── scripts
-│   └── boto3_audit.py
+│   └── boto3_ec2_audit.py
 └── terraform
     ├── outputs.tf
     ├── provider.tf
     ├── resource.tf
     └── variables.tf
+
+5 directories, 10 files

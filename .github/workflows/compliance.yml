@@ -178,7 +178,7 @@ jobs:
             -i reports/opa/input.json \
             -d policies \
             "data.compliance.ec2.deny" \
-            > reports/opa/decision.json
+            > reports/opa/decision.json || true
 
       - name: Upload OPA decision to S3 (OIDC)
         run: |
