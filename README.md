@@ -5,7 +5,6 @@ GitHub Actions pipeline that enforces security and compliance policies before Te
 ## 📂 Repository Structure
 
 ```text
-.
 ├── README.md
 ├── policies
 │   ├── ec2.rego
@@ -15,11 +14,12 @@ GitHub Actions pipeline that enforces security and compliance policies before Te
 │   └── opa
 │       └── input.json
 ├── scripts
-│   └── boto3_ec2_audit.py
+│   ├── boto3_ec2_audit.py
+│   ├── boto3_iam_audit.py
+│   ├── boto3_s3_audit.py
+│   └── boto_opa_stream.py
 └── terraform
     ├── outputs.tf
     ├── provider.tf
     ├── resource.tf
     └── variables.tf
-
-5 directories, 10 files
