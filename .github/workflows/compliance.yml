@@ -1,162 +1,187 @@
 name: Compliance-Gated Deployment Pipeline
 
 on:
-    push:
-        branches:
-            - main
-    workflow_dispatch:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
 
 jobs:
-    checks:
-        name: Security & Compliance Checks
-        runs-on: ubuntu-latest
+  checks:
+    name: Security & Compliance Checks
+    runs-on: ubuntu-latest
 
-        permissions:
-            id-token: write
-            contents: read
+    permissions:
+      id-token: write
+      contents: read
 
-        steps:
-            - name: Checkout repository
-              uses: actions/checkout@v4
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-            - name: Set up Terraform
-              uses: hashicorp/setup-terraform@v3
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
 
-            - name: Configure AWS credentials via OIDC
-              uses: aws-actions/configure-aws-credentials@v4
-              with:
-                  role-to-assume: arn:aws:iam::982081090103:role/github-actions-oidc-role
-                  aws-region: ap-south-1
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::982081090103:role/github-actions-oidc-role
+          aws-region: ap-south-1
 
-            - name: Terraform Init
-              run: |
-                  cd terraform
-                  terraform init
+      - name: Terraform Init
+        run: |
+          cd terraform
+          terraform init
 
-            - name: Terraform Plan
-              run: |
-                  mkdir -p reports
-                  cd terraform
-                  terraform plan -out=tfplan.binary
-                  terraform show -json tfplan.binary > ../reports/tfplan.json
+      - name: Terraform Plan
+        run: |
+          mkdir -p reports
+          cd terraform
+          terraform plan -out=tfplan.binary
+          terraform show -json tfplan.binary > ../reports/tfplan.json
 
-            - name: Set up Python
-              uses: actions/setup-python@v5
-              with:
-                  python-version: "3.10"
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
 
-            - name: Install Checkov
-              run: |
-                  python -m pip install --upgrade pip
-                  pip install checkov
+      - name: Install Checkov
+        run: |
+          python -m pip install --upgrade pip
+          pip install checkov
 
-            - name: Run Checkov scan on Terraform
-              run: |
-                  checkov -d terraform --framework terraform --output json > reports/checkov.json
+      - name: Run Checkov scan on Terraform
+        run: |
+          checkov -d terraform --framework terraform --output json > reports/checkov.json
 
-            - name: Show Checkov summary
-              run: |
-                  checkov -d terraform --quiet || true
+      - name: Show Checkov summary
+        run: |
+          checkov -d terraform --quiet || true
 
-            - name: Upload compliance reports (artifact)
-              uses: actions/upload-artifact@v4
-              with:
-                  name: compliance-reports
-                  path: reports/
+      - name: Upload compliance reports (artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: compliance-reports
+          path: reports/
 
-            - name: Generate compliance metadata
-              run: |
-                  DATE=$(date +%F)
-                  cat <<EOF > reports/metadata.json
-                  {
-                    "tool": "checkov",
-                    "repository": "${GITHUB_REPOSITORY}",
-                    "commit": "${GITHUB_SHA}",
-                    "run_id": "${GITHUB_RUN_ID}",
-                    "actor": "${GITHUB_ACTOR}",
-                    "date": "${DATE}"
-                  }
-                  EOF
+      - name: Generate compliance metadata
+        run: |
+          DATE=$(date +%F)
+          cat <<EOF > reports/metadata.json
+          {
+            "tool": "checkov",
+            "repository": "${GITHUB_REPOSITORY}",
+            "commit": "${GITHUB_SHA}",
+            "run_id": "${GITHUB_RUN_ID}",
+            "actor": "${GITHUB_ACTOR}",
+            "date": "${DATE}"
+          }
+          EOF
 
-            - name: Upload Checkov report to S3 (OIDC)
-              run: |
-                  DATE=$(date +%F)
-                  aws s3 cp reports/checkov.json \
-                    s3://compliance-evidence-ayush-982081090103/checkov/${DATE}/checkov.json
+      - name: Upload Checkov report to S3 (OIDC)
+        run: |
+          DATE=$(date +%F)
+          aws s3 cp reports/checkov.json \
+            s3://compliance-evidence-ayush-982081090103/checkov/${DATE}/checkov.json
 
-            - name: Upload metadata to S3 (OIDC)
-              run: |
-                  DATE=$(date +%F)
-                  aws s3 cp reports/metadata.json \
-                    s3://compliance-evidence-ayush-982081090103/checkov/${DATE}/metadata.json
+      - name: Upload metadata to S3 (OIDC)
+        run: |
+          DATE=$(date +%F)
+          aws s3 cp reports/metadata.json \
+            s3://compliance-evidence-ayush-982081090103/checkov/${DATE}/metadata.json
 
-    apply:
-        name: Protected Apply (Manual Approval Required)
-        needs: checks
-        runs-on: ubuntu-latest
-        environment: production
+  apply:
+    name: Protected Apply (Manual Approval Required)
+    needs: checks
+    runs-on: ubuntu-latest
+    environment: production
 
-        permissions:
-            id-token: write
-            contents: read
+    permissions:
+      id-token: write
+      contents: read
 
-        steps:
-            - name: Checkout repository
-              uses: actions/checkout@v4
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-            - name: Configure AWS credentials via OIDC
-              uses: aws-actions/configure-aws-credentials@v4
-              with:
-                  role-to-assume: arn:aws:iam::982081090103:role/github-actions-oidc-role
-                  aws-region: ap-south-1
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::982081090103:role/github-actions-oidc-role
+          aws-region: ap-south-1
 
-            - name: Verify AWS identity
-              run: aws sts get-caller-identity
+      - name: Verify AWS identity
+        run: aws sts get-caller-identity
 
-            - name: Set up Terraform
-              uses: hashicorp/setup-terraform@v3
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
 
-            - name: Terraform Init
-              run: |
-                  cd terraform
-                  terraform init
+      - name: Terraform Init
+        run: |
+          cd terraform
+          terraform init
 
-            - name: Terraform Apply
-              run: |
-                  cd terraform
-                  terraform apply -auto-approve
+      - name: Terraform Apply
+        run: |
+          cd terraform
+          terraform apply -auto-approve
 
-            - name: Install Prowler
-              run: |
-                  python -m pip install --upgrade pip
-                  pip install prowler
+      - name: Install Prowler
+        run: |
+          python -m pip install --upgrade pip
+          pip install prowler
 
-            - name: Run Prowler (Post-deployement audit)
-              run: |
-                  mkdir -p reports/prowler
-                  prowler aws \
-                  --region ap-south-1 \
-                  --output-formats json-ocsf \
-                  --output-directory reports/prowler \
-                  || true
+      - name: Run Prowler (Post-deployement audit)
+        run: |
+          mkdir -p reports/prowler
+          prowler aws \
+          --region ap-south-1 \
+          --output-formats json-ocsf \
+          --output-directory reports/prowler \
+          || true
 
-            - name: Upload prowler report to s3 (OIDC)
-              run: |
-                  DATE=$(date +%F)
-                   aws s3 sync reports/prowler \
-                    s3://compliance-evidence-ayush-982081090103/prowler/${DATE}/
+      - name: Upload prowler report to s3 (OIDC)
+        run: |
+          DATE=$(date +%F)
+           aws s3 sync reports/prowler \
+            s3://compliance-evidence-ayush-982081090103/prowler/${DATE}/
 
-            - name: Generate Prowler metadata
-              run: |
-                  DATE=$(date +%F)
-                   cat <<EOF > reports/prowler/metadata.json
-                     {
-                       "tool": "prowler",
-                       "repository": "${GITHUB_REPOSITORY}",
-                       "commit": "${GITHUB_SHA}",
-                       "run_id": "${GITHUB_RUN_ID}",
-                       "actor": "${GITHUB_ACTOR}",
-                       "date": "${DATE}",
-                       "trigger": "post-deployment"
-                      }
-                        EOF
+      - name: Generate Prowler metadata
+        run: |
+          DATE=$(date +%F)
+          cat <<EOF > reports/prowler/metadata.json
+          {
+            "tool": "prowler",
+            "repository": "${GITHUB_REPOSITORY}",
+            "commit": "${GITHUB_SHA}",
+            "run_id": "${GITHUB_RUN_ID}",
+            "actor": "${GITHUB_ACTOR}",
+            "date": "${DATE}",
+            "trigger": "post-deployment"
+          }
+          EOF
+
+      - name: Install OPA
+        run: |
+          curl -L -o opa https://openpolicyagent.org/downloads/latest/opa_linux_amd64_static
+          chmod +x opa
+          sudo mv opa /usr/local/bin/opa
+
+      - name: Generate OPA input from AWS (Boto3)
+        run: |
+          mkdir -p reports/opa
+          python scripts/boto3_ec2_audit.py
+
+      - name: Run OPA policy evaluation
+        run: |
+          opa eval \
+            -i reports/opa/input.json \
+            -d policies \
+            "data.compliance.ec2.deny" \
+            > reports/opa/decision.json
+
+      - name: Upload OPA decision to S3 (OIDC)
+        run: |
+          DATE=$(date +%F)
+          aws s3 cp reports/opa/decision.json \
+            s3://compliance-evidence-ayush-982081090103/opa/${DATE}/decision.json
