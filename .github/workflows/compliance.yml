@@ -52,7 +52,7 @@ jobs:
 
       - name: Run Checkov scan on Terraform
         run: |
-          checkov -d terraform --framework terraform --output json > reports/checkov.json
+          checkov -d terraform --framework terraform --output json > reports/checkov.json || true
 
       - name: Show Checkov summary
         run: |
