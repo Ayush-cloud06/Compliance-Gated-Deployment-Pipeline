@@ -10,3 +10,7 @@ line-length = 100
 [tool.ruff.lint]
 # E/W pycodestyle, F pyflakes, I isort, B bugbear, UP pyupgrade, BLE blind-except, S110 try-except-pass
 select = ["E", "W", "F", "I", "B", "UP", "BLE", "S110"]
+
+[tool.pytest.ini_options]
+pythonpath = ["scripts"]
+testpaths = ["tests"]

@@ -5,11 +5,12 @@ import boto3
 LIVE_STATES = ["pending", "running", "stopping", "stopped"]
 
 
-def collect_ec2(ec2=None):
+def collect_ec2(ec2=None, page_size=1000):
     ec2 = ec2 or boto3.client("ec2")
     paginator = ec2.get_paginator("describe_instances")
     pages = paginator.paginate(
         Filters=[{"Name": "instance-state-name", "Values": LIVE_STATES}],
+        PaginationConfig={"PageSize": page_size},
     )
 
     instances = []
