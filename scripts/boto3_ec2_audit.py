@@ -1,38 +1,31 @@
-import json
-import os
+"""Collect EC2 facts for OPA: one record per non-terminated instance."""
 
 import boto3
 
-REGION = os.environ.get("AWS_REGION", "ap-south-1")
+LIVE_STATES = ["pending", "running", "stopping", "stopped"]
 
 
-def collect_ec2():
-    ec2 = boto3.client("ec2", region_name=REGION)
-    response = ec2.describe_instances()
+def collect_ec2(ec2=None):
+    ec2 = ec2 or boto3.client("ec2")
+    paginator = ec2.get_paginator("describe_instances")
+    pages = paginator.paginate(
+        Filters=[{"Name": "instance-state-name", "Values": LIVE_STATES}],
+    )
 
     instances = []
-    for reservation in response["Reservations"]:
-        for inst in reservation["Instances"]:
-            instances.append(
-                {
-                    "instance_id": inst["InstanceId"],
-                    "state": inst["State"]["Name"],
-                    "public_ip": "PublicIpAddress" in inst,
-                }
-            )
+    for page in pages:
+        for reservation in page["Reservations"]:
+            for inst in reservation["Instances"]:
+                instances.append(
+                    {
+                        "instance_id": inst["InstanceId"],
+                        "state": inst["State"]["Name"],
+                        "public_ip": "PublicIpAddress" in inst,
+                    }
+                )
 
     return {
         "total_instances": len(instances),
         "public_instances": sum(1 for i in instances if i["public_ip"]),
         "instances": instances,
     }
-
-
-if __name__ == "__main__":
-    opa_input = {"environment": "prod", "ec2": collect_ec2()}
-
-    os.makedirs("reports/opa", exist_ok=True)
-    with open("reports/opa/input.json", "w") as f:
-        json.dump(opa_input, f, indent=2)
-
-    print("OPA input generated:", "reports/opa/input.json")
