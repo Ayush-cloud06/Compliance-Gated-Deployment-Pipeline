@@ -1,10 +1,11 @@
 variable "aws_region" {
-  default = "ap-south-1"
+  description = "AWS region to deploy into"
+  type        = string
+  default     = "ap-south-1"
 }
-
 
 variable "instance_type" {
-  default = "t2.micro"
+  description = "EC2 instance type for the demo instances"
+  type        = string
+  default     = "t2.micro"
 }
-
-
