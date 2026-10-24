@@ -2,7 +2,6 @@
 # Terraform
 ##################################
 .terraform/
-.terraform.lock.hcl
 *.tfstate
 *.tfstate.*
 crash.log
@@ -24,7 +23,6 @@ terraform.tfvars.json
 *.key
 *.crt
 
-futureroadmap.md
 ##################################
 # Python
 ##################################
@@ -55,3 +53,8 @@ Thumbs.db
 # Logs
 ##################################
 *.log
+
+##################################
+# Local-only notes / plans (not for the repo)
+##################################
+.local-plans/
