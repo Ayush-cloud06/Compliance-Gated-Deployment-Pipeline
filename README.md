@@ -1,11 +1,18 @@
 # Compliance-Gated Deployment Pipeline
-# The pipeline will continue to evolve toward a full governance, risk, and compliance (GRC) workflow, including environment separation, policy maturity, and automated evidence-driven remediation.
+
+> **Status: being modernised.** This repo started as a learning project (Jan 2026) and is being
+> rebuilt in public, one PR at a time. Some sections below describe the *target* design; the
+> audit and modernisation work is tracked through issues and PRs.
+>
+> The pipeline will continue to evolve toward a full governance, risk, and compliance (GRC)
+> workflow, including environment separation, policy maturity, and automated evidence-driven
+> remediation.
 
 A security-first CI/CD pipeline that enforces preventive and detective cloud compliance controls before and after Terraform-based AWS deployments.
 
 This project demonstrates how modern cloud security teams combine Infrastructure as Code scanning, runtime posture assessment, and policy-as-code to produce verifiable, immutable compliance evidence — not just passing builds.
 
-🎯 OBJECTIVES
+## 🎯 Objectives
 
 - Prevent insecure infrastructure from being deployed
 - Detect compliance drift after deployment
@@ -13,113 +20,111 @@ This project demonstrates how modern cloud security teams combine Infrastructure
 - Generate audit-ready evidence artifacts stored immutably in Amazon S3
 - Follow least-privilege, credentialless authentication using GitHub Actions OIDC
 
+## 🧠 High-Level Architecture
 
-🧠 HIGH-LEVEL ARCHITECTURE
+Pipeline flow (GitHub Actions):
 
-Pipeline Flow (GitHub Actions)
-
-1) Pre-deployment (Preventive Controls)
+1. **Pre-deployment (preventive controls)**
    - Terraform Plan
    - Checkov static analysis on Terraform IaC
-
-2) Deployment (Human-Gated)
+2. **Deployment (human-gated)**
    - Manual approval for production
    - Terraform Apply via OIDC (no long-lived AWS credentials)
-
-3) Post-deployment (Detective Controls)
+3. **Post-deployment (detective controls)**
    - Prowler runtime security scan
    - Boto3-based AWS resource discovery
    - OPA (Rego) policy evaluation
-
-4) Evidence Storage
+4. **Evidence storage**
    - All outputs uploaded to an immutable S3 bucket
    - Versioned, date-partitioned, audit-friendly structure
 
-🔐 AUTHENTICATION & TRUST MODEL
+## 🔐 Authentication & Trust Model
 
 - No AWS access keys are used
 - GitHub Actions authenticates to AWS using OIDC
 
-IAM Trust Restrictions:
+IAM trust restrictions:
 - Repository scoped
 - Branch scoped
 - Workflow context aware
 
-Permission Model (Least Privilege):
+Permission model (least privilege):
 - Read-only permissions for audits
 - Write-only permissions for compliance evidence
-- Explicit iam:PassRole where required
+- Explicit `iam:PassRole` where required
 
-🧩 TOOLING & RATIONALE
+## 🧩 Tooling & Rationale
 
-Terraform  → Infrastructure as Code  
-Checkov    → Static security & compliance scanning of Terraform  
-Prowler    → Runtime AWS security posture assessment  
-OPA (Rego) → Policy-as-Code decision engine  
-Boto3      → Live AWS state collection for OPA input  
-GitHub Actions → CI/CD orchestration  
-Amazon S3  → Immutable compliance evidence storage  
+| Tool | Role |
+|---|---|
+| Terraform | Infrastructure as Code |
+| Checkov | Static security & compliance scanning of Terraform |
+| Prowler | Runtime AWS security posture assessment |
+| OPA (Rego) | Policy-as-Code decision engine |
+| Boto3 | Live AWS state collection for OPA input |
+| moto | Local AWS mock for development and tests |
+| GitHub Actions | CI/CD orchestration |
+| Amazon S3 | Immutable compliance evidence storage |
 
+## 📂 Repository Structure
 
+```
+├── .github/workflows/
+│   └── compliance.yml      # CI/CD pipeline
+├── examples/opa/
+│   ├── input.json          # sample OPA input with violations
+│   └── input_clean.json    # sample OPA input with no violations
+├── policies/               # Rego policies (package compliance.*)
+│   ├── ec2.rego
+│   ├── iam.rego
+│   └── s3.rego
+├── scripts/                # Boto3 collectors → OPA input
+│   ├── boto3_ec2_audit.py
+│   ├── boto3_iam_audit.py
+│   ├── boto3_s3_audit.py
+│   └── boto_opa_stream.py
+├── terraform/
+│   ├── outputs.tf
+│   ├── provider.tf
+│   ├── resource.tf
+│   └── variables.tf
+├── requirements-dev.txt    # local dev deps (boto3, moto, pytest)
+└── README.md
+```
 
-📂 REPOSITORY STRUCTURE
-
-
-'''
-├── README.md
-├── policies
-│   ├── ec2.rego        
-│   ├── iam.rego       
-│   └── s3.rego      
-├── reports
-│   └── opa
-│       └── input.json  
-├── scripts
-│   ├── boto3_ec2_audit.py  
-│   ├── boto3_iam_audit.py  
-│   ├── boto3_s3_audit.py    
-│   └── boto_opa_stream.py  
-└── terraform
-    ├── outputs.tf
-    ├── provider.tf
-    ├── resource.tf
-    └── variables.tf
-'''
-
-
-🧪 POLICY EVALUATION MODEL (OPA)
+## 🧪 Policy Evaluation Model (OPA)
 
 OPA does not scan AWS directly.
 
 Instead, the pipeline follows a strict facts → policy → decision model:
 
-1) Boto3 scripts collect facts from AWS
-2) Facts are normalized into a single input.json
-3) Rego policies evaluate the input
-4) OPA outputs decisions, not logs
+1. Boto3 scripts collect facts from AWS
+2. Facts are normalized into a single `input.json`
+3. Rego policies evaluate the input
+4. OPA outputs decisions, not logs
 
 Example OPA decision output:
 
-'''
+```json
 {
   "policy": "ec2_public_instance_block",
   "reason": "Public EC2 instance running in production",
   "resource_id": "i-abc123"
 }
-'''
+```
 
 This separation mirrors real-world GRC architectures used in enterprise environments.
 
-📦 EVIDENCE & AUDIT READINESS
+## 📦 Evidence & Audit Readiness
 
 All security outputs are stored in S3 using the following structure:
 
-'''
+```
 s3://compliance-evidence-<account-id>/
 ├── checkov/YYYY-MM-DD/
 ├── prowler/YYYY-MM-DD/
 └── opa/YYYY-MM-DD/
-'''
+```
 
 Each pipeline run is:
 - Immutable
@@ -135,11 +140,37 @@ This enables:
 - Internal security reviews
 - Historical drift analysis
 
-🚦 ENFORCEMENT PHILOSOPHY
+## 🚦 Enforcement Philosophy
 
-- Checkov  → Advisory (visibility-first)
-- OPA      → Decision authority (policy enforcement)
-- Terraform Apply → Human-approved
-- Prowler  → Continuous detection
+| Component | Role |
+|---|---|
+| Checkov | Advisory (visibility-first) |
+| OPA | Decision authority (policy enforcement) |
+| Terraform Apply | Human-approved |
+| Prowler | Continuous detection |
 
 This avoids false confidence while still enabling automation at scale.
+
+## 🛠 Local Development
+
+Requires Python 3.10+, [uv](https://docs.astral.sh/uv/), Terraform, and OPA.
+
+```bash
+# Python env with boto3 + moto
+uv venv .venv
+source .venv/bin/activate
+uv pip install -r requirements-dev.txt
+
+# Local mock AWS (no real account needed)
+moto_server -p 5000
+# point boto3 at it: endpoint_url="http://localhost:5000"
+
+# Evaluate the policies against the sample inputs
+opa eval -d policies -i examples/opa/input.json 'data.compliance' --format pretty
+opa eval -d policies -i examples/opa/input_clean.json 'data.compliance' --format pretty
+
+# Terraform checks (no AWS credentials needed)
+terraform -chdir=terraform init -backend=false
+terraform -chdir=terraform validate
+terraform -chdir=terraform fmt -check
+```

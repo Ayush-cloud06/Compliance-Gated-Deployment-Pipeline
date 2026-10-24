@@ -1,0 +1,22 @@
+{
+    "environment": "prod",
+    "ec2": {
+        "total_instances": 1,
+        "public_instances": 0,
+        "instances": [
+            {
+                "instance_id": "i-private123",
+                "state": "running",
+                "public_ip": false
+            }
+        ]
+    },
+    "iam": {
+        "total_users": 2,
+        "users_without_mfa": []
+    },
+    "s3": {
+        "total_buckets": 2,
+        "public_buckets": []
+    }
+}
