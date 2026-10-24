@@ -1,2 +1,2 @@
 # Runtime deps for scripts/ (collectors). Range, not pin: prowler pins its own boto3 in CI.
-boto3>=1.36,<2
+boto3>=1.43.116,<2
