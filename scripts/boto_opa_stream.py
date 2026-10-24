@@ -1,13 +1,15 @@
+import json
+import os
+
 from boto3_ec2_audit import collect_ec2
 from boto3_iam_audit import collect_iam
 from boto3_s3_audit import collect_s3
-import json, os
 
 opa_input = {
     "environment": "prod",
     "ec2": collect_ec2(),
     "iam": collect_iam(),
-    "s3": collect_s3()
+    "s3": collect_s3(),
 }
 
 os.makedirs("reports/opa", exist_ok=True)
