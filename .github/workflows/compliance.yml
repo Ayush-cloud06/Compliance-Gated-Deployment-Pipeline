@@ -80,13 +80,13 @@ jobs:
         run: |
           DATE=$(date +%F)
           aws s3 cp reports/checkov.json \
-            s3://compliance-evidence-ayush-982081090103/checkov/${DATE}/checkov.json
+            "s3://compliance-evidence-ayush-982081090103/checkov/${DATE}/checkov.json"
 
       - name: Upload metadata to S3 (OIDC)
         run: |
           DATE=$(date +%F)
           aws s3 cp reports/metadata.json \
-            s3://compliance-evidence-ayush-982081090103/checkov/${DATE}/metadata.json
+            "s3://compliance-evidence-ayush-982081090103/checkov/${DATE}/metadata.json"
 
   apply:
     name: Protected Apply (Manual Approval Required)
@@ -157,7 +157,7 @@ jobs:
         run: |
           DATE=$(date +%F)
           aws s3 sync reports/prowler \
-            s3://compliance-evidence-ayush-982081090103/prowler/${DATE}/
+            "s3://compliance-evidence-ayush-982081090103/prowler/${DATE}/"
 
       - name: Install OPA
         run: |
@@ -182,4 +182,4 @@ jobs:
         run: |
           DATE=$(date +%F)
           aws s3 cp reports/opa/decision.json \
-            s3://compliance-evidence-ayush-982081090103/opa/${DATE}/decision.json
+            "s3://compliance-evidence-ayush-982081090103/opa/${DATE}/decision.json"

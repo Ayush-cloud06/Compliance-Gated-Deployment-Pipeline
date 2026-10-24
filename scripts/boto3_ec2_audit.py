@@ -1,36 +1,38 @@
-
-import boto3
 import json
 import os
 
+import boto3
+
 REGION = os.environ.get("AWS_REGION", "ap-south-1")
 
-ec2 = boto3.client("ec2", region_name=REGION)
 
-response = ec2.describe_instances()
+def collect_ec2():
+    ec2 = boto3.client("ec2", region_name=REGION)
+    response = ec2.describe_instances()
 
-instances = []
+    instances = []
+    for reservation in response["Reservations"]:
+        for inst in reservation["Instances"]:
+            instances.append(
+                {
+                    "instance_id": inst["InstanceId"],
+                    "state": inst["State"]["Name"],
+                    "public_ip": "PublicIpAddress" in inst,
+                }
+            )
 
-for reservation in response["Reservations"]:
-    for inst in reservation["Instances"]:
-        instances.append({
-            "instance_id": inst["InstanceId"],
-            "state": inst["State"]["Name"],
-            "public_ip": "PublicIpAddress" in inst
-        })
-
-opa_input = {
-    "environment": "prod",
-    "ec2": {
+    return {
         "total_instances": len(instances),
         "public_instances": sum(1 for i in instances if i["public_ip"]),
-        "instances": instances
+        "instances": instances,
     }
-}
 
-os.makedirs("reports/opa", exist_ok=True)
 
-with open("reports/opa/input.json", "w") as f:
-    json.dump(opa_input, f, indent=2)
+if __name__ == "__main__":
+    opa_input = {"environment": "prod", "ec2": collect_ec2()}
 
-print("OPA input generated:", "reports/opa/input.json")
+    os.makedirs("reports/opa", exist_ok=True)
+    with open("reports/opa/input.json", "w") as f:
+        json.dump(opa_input, f, indent=2)
+
+    print("OPA input generated:", "reports/opa/input.json")
