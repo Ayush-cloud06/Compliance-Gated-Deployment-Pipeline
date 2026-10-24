@@ -168,7 +168,7 @@ jobs:
       - name: Generate OPA input from AWS (Boto3)
         run: |
           mkdir -p reports/opa
-          python scripts/boto3_ec2_audit.py
+          python scripts/boto_opa_stream.py --environment prod
 
       - name: Run OPA policy evaluation
         run: |

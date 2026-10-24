@@ -170,7 +170,10 @@ pre-commit run --all-files
 
 # Local mock AWS (no real account needed)
 moto_server -p 5000
-# point boto3 at it: endpoint_url="http://localhost:5000"
+
+# Collect EC2/IAM/S3 facts into OPA input (against moto, in another shell)
+AWS_ENDPOINT_URL=http://localhost:5000 AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test \
+  python scripts/boto_opa_stream.py --environment prod --output reports/opa/input.json
 
 # Evaluate the policies against the sample inputs
 opa eval -d policies -i examples/opa/input.json 'data.compliance' --format pretty
