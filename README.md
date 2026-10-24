@@ -70,7 +70,8 @@ Permission model (least privilege):
 
 ```
 ├── .github/workflows/
-│   └── compliance.yml      # CI/CD pipeline
+│   ├── ci.yml              # lint checks on every PR
+│   └── compliance.yml      # compliance pipeline (manual for now)
 ├── examples/opa/
 │   ├── input.json          # sample OPA input with violations
 │   └── input_clean.json    # sample OPA input with no violations
@@ -88,7 +89,9 @@ Permission model (least privilege):
 │   ├── provider.tf
 │   ├── resource.tf
 │   └── variables.tf
-├── requirements-dev.txt    # local dev deps (boto3, moto, pytest)
+├── .pre-commit-config.yaml # local mirror of CI lint checks
+├── pyproject.toml          # ruff config
+├── requirements-dev.txt    # local dev deps (boto3, moto, pytest, pre-commit)
 └── README.md
 ```
 
@@ -153,13 +156,17 @@ This avoids false confidence while still enabling automation at scale.
 
 ## 🛠 Local Development
 
-Requires Python 3.10+, [uv](https://docs.astral.sh/uv/), Terraform, and OPA.
+Requires Python 3.10+, [uv](https://docs.astral.sh/uv/), Terraform, OPA, and Docker (for the actionlint/tflint hooks).
 
 ```bash
 # Python env with boto3 + moto
 uv venv .venv
 source .venv/bin/activate
 uv pip install -r requirements-dev.txt
+
+# Git hooks: run the same lint checks as CI before every commit
+pre-commit install
+pre-commit run --all-files
 
 # Local mock AWS (no real account needed)
 moto_server -p 5000

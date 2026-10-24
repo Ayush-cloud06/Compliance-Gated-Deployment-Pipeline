@@ -1,3 +1,4 @@
 boto3
 moto[server]
 pytest
+pre-commit
