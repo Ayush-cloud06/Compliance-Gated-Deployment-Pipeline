@@ -1,9 +1,7 @@
 name: Compliance-Gated Deployment Pipeline
 
+# Manual-only while the AWS OIDC role is being rebuilt; push trigger returns in a later PR.
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
 
 jobs:
@@ -131,7 +129,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install prowler
 
-      - name: Run Prowler (Post-deployement audit)
+      - name: Run Prowler (post-deployment audit)
         run: |
           mkdir -p reports/prowler
           prowler aws \
@@ -139,12 +137,6 @@ jobs:
           --output-formats json-ocsf \
           --output-directory reports/prowler \
           || true
-
-      - name: Upload prowler report to s3 (OIDC)
-        run: |
-          DATE=$(date +%F)
-           aws s3 sync reports/prowler \
-            s3://compliance-evidence-ayush-982081090103/prowler/${DATE}/
 
       - name: Generate Prowler metadata
         run: |
@@ -160,6 +152,12 @@ jobs:
             "trigger": "post-deployment"
           }
           EOF
+
+      - name: Upload Prowler report to S3 (OIDC)
+        run: |
+          DATE=$(date +%F)
+          aws s3 sync reports/prowler \
+            s3://compliance-evidence-ayush-982081090103/prowler/${DATE}/
 
       - name: Install OPA
         run: |
