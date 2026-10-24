@@ -75,10 +75,12 @@ Permission model (least privilege):
 ├── examples/opa/
 │   ├── input.json          # sample OPA input with violations
 │   └── input_clean.json    # sample OPA input with no violations
-├── policies/               # Rego policies (package compliance.*)
-│   ├── ec2.rego
-│   ├── iam.rego
-│   └── s3.rego
+├── policies/               # Rego v1 policies (package compliance.*)
+│   ├── compliance.rego     # aggregate: data.compliance.deny
+│   ├── ec2.rego / iam.rego / s3.rego
+│   ├── lib/lib.rego        # shared helpers (is_prod, decision shape)
+│   └── *_test.rego         # opa test (package tests.*)
+├── tests/                  # pytest + moto tests for the collectors
 ├── scripts/                # Boto3 collectors → OPA input
 │   ├── boto3_ec2_audit.py
 │   ├── boto3_iam_audit.py
@@ -111,10 +113,16 @@ Example OPA decision output:
 ```json
 {
   "policy": "ec2_public_instance_block",
-  "reason": "Public EC2 instance running in production",
-  "resource_id": "i-abc123"
+  "title": "No public EC2 instances in production",
+  "severity": "high",
+  "resource_type": "ec2_instance",
+  "resource_id": "i-abc123",
+  "reason": "Public EC2 instance running in production"
 }
 ```
+
+Every policy emits one decision per resource in this shape. `data.compliance.deny` is the
+union across all domains. Policy title, ID and severity come from each rule's `# METADATA`.
 
 This separation mirrors real-world GRC architectures used in enterprise environments.
 
@@ -175,9 +183,13 @@ moto_server -p 5000
 AWS_ENDPOINT_URL=http://localhost:5000 AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test \
   python scripts/boto_opa_stream.py --environment prod --output reports/opa/input.json
 
+# Tests
+pytest                       # collectors (moto)
+opa test policies -v         # policies
+
 # Evaluate the policies against the sample inputs
-opa eval -d policies -i examples/opa/input.json 'data.compliance' --format pretty
-opa eval -d policies -i examples/opa/input_clean.json 'data.compliance' --format pretty
+opa eval -d policies -i examples/opa/input.json 'data.compliance.deny' --format pretty
+opa eval -d policies -i examples/opa/input_clean.json 'data.compliance.deny' --format pretty
 
 # Terraform checks (no AWS credentials needed)
 terraform -chdir=terraform init -backend=false

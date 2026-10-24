@@ -73,8 +73,8 @@ jobs:
           tflint --init
           tflint --format compact
 
-  opa-lint:
-    name: OPA lint (check, fmt)
+  opa:
+    name: OPA (check, fmt, test)
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -88,6 +88,13 @@ jobs:
         run: opa check --strict policies
       - name: opa fmt (fail if unformatted)
         run: opa fmt --fail --list policies
+      - name: opa test
+        run: opa test policies -v
+      - name: Sample inputs give expected decisions
+        run: |
+          n() { opa eval -d policies -i "$1" 'count(data.compliance.deny)' -f raw; }
+          test "$(n examples/opa/input.json)" = 3
+          test "$(n examples/opa/input_clean.json)" = 0
 
   actionlint:
     name: Workflow lint (actionlint)
