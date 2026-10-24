@@ -93,7 +93,8 @@ Permission model (least privilege):
 │   └── variables.tf
 ├── .pre-commit-config.yaml # local mirror of CI lint checks
 ├── pyproject.toml          # ruff config
-├── requirements-dev.txt    # local dev deps (boto3, moto, pytest, pre-commit)
+├── requirements.txt        # runtime deps (boto3)
+├── requirements-dev.txt    # dev deps (moto, pytest, pre-commit)
 └── README.md
 ```
 
@@ -164,7 +165,7 @@ This avoids false confidence while still enabling automation at scale.
 
 ## 🛠 Local Development
 
-Requires Python 3.10+, [uv](https://docs.astral.sh/uv/), Terraform, OPA, and Docker (for the actionlint/tflint hooks).
+Requires Python 3.12+, [uv](https://docs.astral.sh/uv/), Terraform, OPA, and Docker (for the actionlint/tflint hooks).
 
 ```bash
 # Python env with boto3 + moto
