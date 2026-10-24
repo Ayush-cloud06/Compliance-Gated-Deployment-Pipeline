@@ -1,12 +1,20 @@
 package compliance.iam
 
-deny[result] if {
-	input.environment == "prod"
-	count(input.iam.users_without_mfa) > 0
+import data.compliance.lib
 
-	result := {
-		"policy": "iam_mfa_required",
-		"reason": "IAM users without MFA in production",
-		"users": input.iam.users_without_mfa,
-	}
+# METADATA
+# title: Console IAM users must have MFA in production
+# custom:
+#   policy_id: iam_mfa_required
+#   severity: high
+deny contains decision if {
+	lib.is_prod
+	some user in input.iam.users_without_mfa
+
+	decision := lib.decision(
+		rego.metadata.rule(),
+		"iam_user",
+		user,
+		"IAM user with console access has no MFA in production",
+	)
 }
